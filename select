@@ -1,0 +1,96 @@
+DECLARE FECHA_DESDE DATE DEFAULT '2023-02-16'
+;
+DECLARE FECHA_HASTA DATE DEFAULT '2023-02-16'
+;
+
+WITH ITEMS AS
+
+(
+  SELECT
+      A.SIT_SITE_ID
+    , A.ITE_ITEM_ID
+    , COALESCE(A.ITE_CNS_CONCESIONARIO,0) AS ITE_CNS_CONCESIONARIO
+    , CAT.CAT_CATEG_NAME_L1
+    , CAT.CAT_CATEG_NAME_L2
+    , CAT.CAT_CATEG_NAME_L3
+    , CAT.CAT_CATEG_NAME_L4
+
+  FROM `meli-bi-data.WHOWNER.LK_ITE_ITEMS` AS A
+
+  -- LE AGREGO CATEGORY NAME
+  INNER JOIN `meli-bi-data.WHOWNER.AG_LK_CAT_CATEGORIES` AS CAT 
+	ON    CAT.CAT_CATEG_ID_L7 = CAST(A.CAT_CATEG_ID AS INTEGER)
+	AND CAT.SIT_SITE_ID = A.SIT_SITE_ID
+    AND CAT.CAT_CATEG_ID_L1 IN (1459) -- AND CAT.CAT_CATEG_ID_L1 IN (1743,1459) -- REAL ESTATE Y MOTORS
+)
+
+, A AS
+(
+SELECT
+    DATE_TRUNC(fecha, MONTH) AS Mes
+  , site
+  , businessUnit
+  , (CASE WHEN UPPER(vertical) LIKE ('REA%') THEN 'RE'
+          WHEN UPPER(vertical) LIKE ('MO%') THEN  'MO'
+          WHEN UPPER(vertical) LIKE ('SER%') THEN 'SE' END) AS vertical_que_recibio_lead
+
+  , (CASE WHEN CAT_CATEG_NAME_L4 IN ('Desarrollos Inmobiliarios','Emprendimientos','Lançamentos','Proyectos') THEN 'Desarrollos'
+          WHEN CAT_CATEG_NAME_L3 IN ('Arriendo Temporal','Temporada','Alquiler Temporal','Alquiler Temporada','Alquiler Temporario','Alquiler Vacacional','Renta Vacacional') THEN 'Alquiler temporal'
+          WHEN CAT_CATEG_NAME_L3 IN ('Venta','Venda') THEN 'Venta'
+          WHEN CAT_CATEG_NAME_L3 IN ('Alquiler','Traspaso','Aluguel','Renta','Arriendo') THEN 'Alquiler' 
+          ELSE 'Tracking ItemId Null' END) AS operacion_que_recibio_lead
+
+    -- clasicacion en base a glosario de campañas POM
+  , (CASE WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DARE_ALLB_LEAD_SMARTLY2-V2' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DARE_ALLB_LEAD_V2' THEN 'Venta'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DABA_NEWB_LEAD_MERCADOLIBRE' AND UPPER(trafficSource.adContent) = 'ALQUILER' THEN 'Alquiler'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DABA_NEWB_LEAD_MERCADOLIBRE' AND UPPER(trafficSource.adContent) = 'VENTA' THEN 'Venta'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DARE_REPB_LEAD_MERCADOLIBRE' AND UPPER(trafficSource.adContent) = 'ALQUILER' THEN 'Alquiler'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_FB_AO_RE_X_DARE_REPB_LEAD_MERCADOLIBRE' AND UPPER(trafficSource.adContent) = 'VENTA' THEN 'Venta'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_ANTOFAGASTA' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_SEARCH_ALLB_LEAD_SANTIAGO-VENTA' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_ARAUCANIA' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_BIOBIO' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_COQUIMBO' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_LOS-LAGOS' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_MAULE' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_OHIGGINS' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_RESTOCHILE' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_RM-PROYECTOS' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_RM-VENTA' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_DSA_ALLB_LEAD_VALPARAISO-VENTA' THEN 'Desarrollos'
+          WHEN UPPER(trafficSource.campaign) = 'MLC_CLASSI_G_AO_RE_X_SEARCH_ALLB_LEAD_SANTIAGO-ARRIENDO' THEN 'Alquiler'
+          ELSE 'Sin clasificacion POM' END) AS target_de_POM
+          
+  , (CASE WHEN ITE_CNS_CONCESIONARIO = 1 THEN 'Concesionario'
+          WHEN ITE_CNS_CONCESIONARIO = 2 THEN 'Inmobiliaria'
+          ELSE 'FSBO' END) AS dealer_que_recibio_lead
+
+  , COUNT(IF(type = 'EVENT',1,NULL)) AS contactos_totales
+  , COUNT(*) AS conteo_total
+
+
+
+
+FROM `meli-bi-data.SBOX_CLASSI_PLANNING.GA_VIS_ALL_SITES` AS A
+
+-- JOIN CON ITEMS + CATEGORIAS
+LEFT JOIN ITEMS AS B
+ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(B.SIT_SITE_ID,B.ITE_ITEM_ID)
+
+WHERE site = 'MLC'
+AND businessUnit = 'ML' -- traigo solo ML porque POM anuncia solo ML -- ,'PortalInmobiliario'
+AND upper(eventInfo.eventAction) in ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')
+AND REGEXP_CONTAINS(upper(trafficSource.campaign),'.*MLC_CLASSI.*') IS TRUE
+AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
+
+GROUP BY 1,2,3,4,5,6,7
+)
+
+SELECT A.*
+  , (CASE WHEN operacion_que_recibio_lead = target_de_POM THEN 'Ad bien dirigido' ELSE 'Desvio' END) AS filtro_pom
+
+FROM A
+
+ORDER BY 1,2,3,4,5,6,7,8
+;
