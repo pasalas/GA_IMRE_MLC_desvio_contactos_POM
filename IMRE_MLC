@@ -1,3 +1,4 @@
+
 -- listado de campañas POM https://docs.google.com/spreadsheets/d/1iq7D9_d8YCnrO4G-2zrybB6O1lY8pzIwunKht-24Axk/edit#gid=0
 
 DECLARE FECHA_DESDE DATE DEFAULT '2022-10-01'
@@ -11,6 +12,13 @@ SELECT
     DATE_TRUNC(A.fecha, MONTH) AS Mes
   , A.site
   , A.businessUnit
+
+  -- INICIO columnas si coincide con filtros de seguimiento diario POM
+  , (CASE WHEN A.vertical = 'MOTORS' THEN 'Coincide'
+          WHEN A.vertical = 'REAL_ESTATE' THEN 'Coincide' ELSE 'No coincide' END) AS coincide_vertical
+  , (CASE WHEN upper(trafficSource.medium) in ('DISPLAY','CPC','DPA','SOCIAL','MEDIA','EMAILS','EMAIL','SOCIAL','SOCIALMEDIA','RETARGETING') THEN 'Coincide' ELSE 'No coincide' END) AS coincide_medium
+  -- FIN columnas si coincide con filtros de seguimiento diario POM
+
   , (CASE WHEN UPPER(A.vertical) LIKE ('REA%') THEN 'RE'
           WHEN UPPER(A.vertical) LIKE ('MO%') THEN  'MO'
           WHEN UPPER(A.vertical) LIKE ('SER%') THEN 'SE' END) AS vertical_que_recibio_lead
@@ -282,13 +290,13 @@ LEFT JOIN  `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS C
 ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(C.SIT_SITE_ID,C.ITE_ITEM_ID)
 
 
-WHERE site IN ('MLA','MLB','MLC','MLM','MLU')
+WHERE site IN ('MLA','MLB','MLC','MLM')
 -- AND businessUnit = 'ML' -- traigo solo ML porque POM anuncia solo ML -- ,'PortalInmobiliario'
 AND upper(eventInfo.eventAction) in ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')
 AND REGEXP_CONTAINS(upper(trafficSource.campaign),'.*_CLASSI_.*') IS TRUE
 AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
 
-GROUP BY 1,2,3,4,5,6,7,8
+GROUP BY 1,2,3,4,5,6,7,8,9,10
 )
 
 SELECT A.*
