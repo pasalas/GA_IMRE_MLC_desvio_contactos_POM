@@ -1,13 +1,11 @@
-
 -- listado de campañas POM https://docs.google.com/spreadsheets/d/1iq7D9_d8YCnrO4G-2zrybB6O1lY8pzIwunKht-24Axk/edit#gid=0
 
-DECLARE FECHA_DESDE DATE DEFAULT '2022-10-01'
+DECLARE FECHA_DESDE DATE DEFAULT '2022-07-01'
 ;
 DECLARE FECHA_HASTA DATE DEFAULT '2023-03-31'
 ;
 
-WITH A AS
-(
+
 SELECT
     DATE_TRUNC(A.fecha, MONTH) AS Mes
   , A.site
@@ -23,7 +21,8 @@ SELECT
           WHEN UPPER(A.vertical) LIKE ('MO%') THEN  'MO'
           WHEN UPPER(A.vertical) LIKE ('SER%') THEN 'SE' END) AS vertical_que_recibio_lead
 
-  , (CASE WHEN COALESCE(B.Categoria_l4,C.Categoria_l4) IN ('Desarrollos Inmobiliarios','Emprendimientos','Lançamentos','Proyectos') THEN 'Desarrollos'
+  , (CASE WHEN UPPER(A.vertical) LIKE ('SER%') THEN '-'
+          WHEN COALESCE(B.Categoria_l4,C.Categoria_l4) IN ('Desarrollos Inmobiliarios','Emprendimientos','Lançamentos','Proyectos') THEN 'Desarrollos'
           WHEN COALESCE(B.Categoria_l3,C.Categoria_l3) IN ('Arriendo Temporal','Temporada','Alquiler Temporal','Alquiler Temporada','Alquiler Temporario','Alquiler Vacacional','Renta Vacacional') THEN 'Alquiler temporal'
           WHEN COALESCE(B.Categoria_l3,C.Categoria_l3) IN ('Venta','Venda') THEN 'Venta'
           WHEN COALESCE(B.Categoria_l3,C.Categoria_l3) IN ('Alquiler','Traspaso','Aluguel','Renta','Arriendo') THEN 'Alquiler' 
@@ -268,9 +267,14 @@ SELECT
           WHEN UPPER(trafficSource.campaign) = 'MLU_CLASSI_G_AO_MOT_X_DSA_ALLB_LEAD_AUTOS Y CAMIONETAS' THEN 'MO - DEALERS' 
 
           ELSE 'Sin clasificacion POM' END) AS target_de_POM
+
+  , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_FB_%' THEN 'facebook' 
+          WHEN UPPER(trafficSource.campaign) LIKE '%_G_%' THEN 'google' 
+          ELSE 'other' END) AS is_FB_or_G
           
-  , COALESCE(B.user_type,C.user_type) AS dealer_que_recibio_lead
-  , COALESCE(B.combo,C.combo) AS combo_que_recibio_lead
+  , (CASE WHEN UPPER(A.vertical) LIKE ('SER%') THEN '-' ELSE COALESCE(B.user_type,C.user_type) END) AS dealer_que_recibio_lead
+  , (CASE WHEN UPPER(A.vertical) LIKE ('SER%') THEN '-' ELSE COALESCE(B.combo,C.combo) END) AS combo_que_recibio_lead
+  , (CASE WHEN UPPER(A.vertical) LIKE ('SER%') THEN '-' ELSE COALESCE(B.estado,C.estado) END) AS estado_del_item_que_recibio_lead
 
   , COUNT(IF(type = 'EVENT',1,NULL)) AS contactos_totales
   , COUNT(*) AS conteo_total
@@ -296,12 +300,5 @@ AND upper(eventInfo.eventAction) in ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTAT
 AND REGEXP_CONTAINS(upper(trafficSource.campaign),'.*_CLASSI_.*') IS TRUE
 AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10
-)
-
-SELECT A.*
-
-FROM A
-
-ORDER BY 1,2,3,4,5,6,7,8
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
 ;
