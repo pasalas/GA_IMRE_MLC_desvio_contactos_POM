@@ -1,0 +1,51 @@
+DECLARE PARAMETRO_FECHA DATE DEFAULT CURRENT_DATE-2
+;
+DECLARE PARAMETRO_SITES ARRAY <STRING>
+;
+SET PARAMETRO_SITES = ['MLA','MLB','MLC','MLU','MLM']
+;
+
+
+SELECT
+    A.fecha
+  , EXTRACT(DAY FROM A.fecha) AS day
+  , EXTRACT(MONTH FROM A.fecha) AS month
+  , EXTRACT(YEAR FROM A.fecha) AS year
+  , EXTRACT(WEEK FROM A.fecha) AS week
+  , A.site
+  , A.businessUnit
+  , (CASE WHEN UPPER(A.vertical) LIKE ('REA%') THEN 'REAL_ESTATE'
+          WHEN UPPER(A.vertical) LIKE ('MO%') THEN  'MOTORS'
+          WHEN UPPER(A.vertical) LIKE ('SER%') THEN 'SERVICES' END) AS vertical
+  , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN 'PAID VIS'
+          WHEN UPPER(trafficSource.medium) IN ('DISPLAY','CPC','DPA','SOCIAL','MEDIA','EMAILS','EMAIL','SOCIAL','SOCIALMEDIA','RETARGETING') THEN 'PAID CORE'
+          WHEN UPPER(channelGrouping) = 'DIRECT'  THEN 'DIRECT'
+          WHEN UPPER(channelGrouping) = 'ORGANIC' THEN 'ORGANIC'
+          ELSE 'OTHER' END) AS channel_grouped
+  , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN trafficSource.campaign ELSE 'Not Classi' END) AS CampaignName
+  , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN trafficSource.adContent ELSE 'Not Classi' END) AS AdContent
+
+  , COUNT(*) AS contactos_totales
+
+
+
+
+FROM `meli-bi-data.SBOX_CLASSI_PLANNING.GA_VIS_ALL_SITES` AS A
+
+-- -- join atributos REAL ESTATE
+-- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS B
+-- ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(B.SIT_SITE_ID,B.ITE_ITEM_ID)
+
+
+-- -- join atributos MOTORS
+-- LEFT JOIN  `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS C
+-- ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(C.SIT_SITE_ID,C.ITE_ITEM_ID)
+
+
+WHERE site IN UNNEST(PARAMETRO_SITES)
+AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')
+AND type = 'EVENT'
+AND FECHA = PARAMETRO_FECHA
+
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11
+;
