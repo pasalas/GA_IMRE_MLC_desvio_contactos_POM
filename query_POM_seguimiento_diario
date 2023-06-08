@@ -1,5 +1,8 @@
-DECLARE PARAMETRO_FECHA DATE DEFAULT CURRENT_DATE-2
+DECLARE FECHA_DESDE DATE DEFAULT '2023-06-01'
 ;
+DECLARE FECHA_HASTA DATE DEFAULT '2023-06-02'
+;
+
 DECLARE PARAMETRO_SITES ARRAY <STRING>
 ;
 SET PARAMETRO_SITES = ['MLA','MLB','MLC','MLU','MLM']
@@ -19,11 +22,12 @@ SELECT
           WHEN UPPER(A.vertical) LIKE ('SER%') THEN 'SERVICES' END) AS vertical
   , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN 'PAID VIS'
           WHEN UPPER(trafficSource.medium) IN ('DISPLAY','CPC','DPA','SOCIAL','MEDIA','EMAILS','EMAIL','SOCIAL','SOCIALMEDIA','RETARGETING') THEN 'PAID CORE'
-          WHEN UPPER(channelGrouping) = 'DIRECT'  THEN 'DIRECT'
-          WHEN UPPER(channelGrouping) = 'ORGANIC' THEN 'ORGANIC'
+          WHEN channelGrouping = 'Direct'  THEN 'DIRECT'
+          WHEN channelGrouping = 'Organic Search' THEN 'ORGANIC'
           ELSE 'OTHER' END) AS channel_grouped
   , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN trafficSource.campaign ELSE 'Not Classi' END) AS CampaignName
   , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN trafficSource.adContent ELSE 'Not Classi' END) AS AdContent
+  , (CASE WHEN UPPER(trafficSource.campaign) LIKE '%_CLASSI_%' THEN CAST(trafficSource.adwordsClickInfo.adGroupId AS STRING) ELSE 'Not Classi' END) AS AdGroupId
 
   , COUNT(*) AS contactos_totales
 
@@ -45,7 +49,7 @@ FROM `meli-bi-data.SBOX_CLASSI_PLANNING.GA_VIS_ALL_SITES` AS A
 WHERE site IN UNNEST(PARAMETRO_SITES)
 AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')
 AND type = 'EVENT'
-AND FECHA = PARAMETRO_FECHA
+AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
 ;
