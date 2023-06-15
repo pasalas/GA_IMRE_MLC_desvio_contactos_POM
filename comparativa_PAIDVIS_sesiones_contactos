@@ -30,6 +30,12 @@ SELECT
   
   , COUNT( DISTINCT CONCAT(fullVisitorId, CAST(visitStartTime AS string)) ) AS Sessions
 
+  -- custom dimension 103 = cus_cust_id | 116 = uid
+  , COUNT(DISTINCT IF((SELECT MAX(value) FROM A.customDimensions WHERE index= 103) = 'NOT_LOGGED_IN',(SELECT MAX(value) FROM A.customDimensions WHERE index= 116),(SELECT MAX(value) FROM A.customDimensions WHERE index= 103))) AS unique_user
+  , COUNT(DISTINCT (SELECT MAX(value) FROM A.customDimensions WHERE index= 103)) AS unique_cus_cust_id
+  , COUNT(DISTINCT (SELECT MAX(value) FROM A.customDimensions WHERE index= 116)) AS unique_uid
+
+
   , COUNT(IF((type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/'),1,NULL)) AS Vip_visit_totales
 
   , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')) ,1,NULL)) AS contactos_totales
