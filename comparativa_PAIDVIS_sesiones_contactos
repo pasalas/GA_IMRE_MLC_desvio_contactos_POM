@@ -1,0 +1,72 @@
+DECLARE FECHA_DESDE DATE DEFAULT '2022-01-01'
+;
+DECLARE FECHA_HASTA DATE DEFAULT CURRENT_DATE
+;
+
+DECLARE PARAMETRO_SITES ARRAY <STRING>
+;
+SET PARAMETRO_SITES = ['MLC']
+;
+
+
+SELECT
+    DATE_TRUNC(A.fecha,MONTH) AS mes
+  , A.site
+  , A.businessUnit
+  , (CASE WHEN UPPER(A.vertical) LIKE ('REA%') THEN 'REAL_ESTATE'
+          WHEN UPPER(A.vertical) LIKE ('MO%') THEN  'MOTORS'
+          WHEN UPPER(A.vertical) LIKE ('SER%') THEN 'SERVICES' END) AS vertical
+
+  , B.Categoria_l3 AS operation
+
+, (CASE WHEN device.deviceCategory = 'desktop' THEN 'desktop'
+        WHEN businessUnit <> 'ML' THEN 'mobile'
+        WHEN appInfo.screenName LIKE "/%" THEN 'app'
+        ELSE 'mobile' END) AS devicePlatform
+
+  , (CASE WHEN trafficSource.campaign LIKE '%_CLASSI_%' THEN TRUE ELSE FALSE END) AS is_paid_VIS
+
+
+  
+  , COUNT( DISTINCT CONCAT(fullVisitorId, CAST(visitStartTime AS string)) ) AS Sessions
+
+  , COUNT(IF((type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/'),1,NULL)) AS Vip_visit_totales
+
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')) ,1,NULL)) AS contactos_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL')) ,1,NULL)) AS call_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CONTACT')) ,1,NULL)) AS question_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CONTACT_WHATSAPP')) ,1,NULL)) AS whatsapp_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('QUOTATION')) ,1,NULL)) AS quotation_totales
+
+
+
+
+
+FROM `meli-bi-data.SBOX_CLASSI_PLANNING.GA_VIS_ALL_SITES` AS A
+
+-- -- join atributos REAL ESTATE
+LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS B
+ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(B.SIT_SITE_ID,B.ITE_ITEM_ID)
+
+
+-- -- join atributos MOTORS
+-- LEFT JOIN  `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS C
+-- ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID*/ = CONCAT(C.SIT_SITE_ID,C.ITE_ITEM_ID)
+
+
+WHERE site IN UNNEST(PARAMETRO_SITES)
+AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
+AND A.vertical LIKE ('REA%')
+
+-- filtro para vip visit + contactos
+AND (    (type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/') -- FILTRO PARA VIP VISIT
+      OR (type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')) ) -- FILTRO PARA CONTACTOS
+
+
+AND B.Categoria_l3 = 'Arriendo'
+
+
+
+GROUP BY 1,2,3,4,5,6,7
+ORDER BY 1,2,3,4,5,6,7
+;
