@@ -1,0 +1,90 @@
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+-- 1) ejemplo con posibles JOINS y custom fields
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+SELECT 
+    A.LEAD_CREATED_DT
+  , EXTRACT(DAY FROM A.LEAD_CREATED_DT) AS day
+  , EXTRACT(MONTH FROM A.LEAD_CREATED_DT) AS month
+  , EXTRACT(YEAR FROM A.LEAD_CREATED_DT) AS year
+  , EXTRACT(WEEK FROM A.LEAD_CREATED_DT) AS week
+  , B.sit_site_id
+  -- business unit
+  , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
+
+  -- , E.cat_categ_name_l2
+
+  , B.CCL_PLATFORM_ID
+
+---------------------------------------------
+----- columnas de atribución ---------------- 
+---------------------------------------------
+  , (CASE WHEN C.ite_quot_source = 'facebook' THEN 'PAID' -- cotizaciones FB FORMS
+          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'PAID' -- questions FB FORMS
+          WHEN A.matt_type_source = 'direct' THEN 'DIRECT'
+          WHEN A.matt_stimulus_source_type = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
+          WHEN A.matt_stimulus_source_type = 'SEO' AND UPPER(A.matt_strategy) = 'NON BRAND' THEN 'SEO'
+          WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
+          WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
+          WHEN A.matt_businessline IN ('REAL ESTATE','MOTORS','VIS GENERIC / ALL','AUTOPARTES') THEN 'PAID'
+          ELSE 'other' END) AS grouped_attribution
+
+  , (CASE WHEN C.ite_quot_source = 'facebook' THEN 'POM VIS'
+          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
+          WHEN (UPPER(A.matt_businessline) IN ('MOTORS','REAL ESTATE') 
+                AND UPPER(A.matt_campaign) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+                AND UPPER(A.matt_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
+          END) AS is_POM_VIS -- logica acordada con equipo POM
+
+  , SAFE_DIVIDE( SUM(MATT_PORC_FIRST_CLICK), 100) AS contact_fist_click_attribution
+  , SAFE_DIVIDE( SUM(MATT_PORC_LAST_CLICK), 100) AS contact_last_click_attribution
+  , SAFE_DIVIDE( SUM(MATT_PORC_LINEAL), 100) AS contact_lineal_attribution
+  , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
+
+
+
+
+
+FROM `growth-attribution.production.BT_MATT_ATTRIBUTION_LEADS` AS A
+
+-- para joinear con fuente de dónde MATT toma leads de questions, call, whatsapp y quotation
+LEFT JOIN `meli-bi-data.WHOWNER.BT_CONTACTS_CLASSIFIEDS` AS B
+ON A.lead_id = B.id
+
+-- para tener info extra de quotations. FB FORMS = ITE_QUOT_SOURCE IN ('facebook')
+LEFT JOIN `meli-bi-data.WHOWNER.BT_ITE_QUOTATION` AS C
+ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(C.ITE_QUOTATION_ID AS STRING)
+
+-- para tener info extra de questions. FB FORMS = QUESTION_APP_ID IN (6606988212253970,6557539776310564)
+LEFT JOIN `meli-bi-data.WHOWNER.BT_ITEM_QUESTIONS` AS D
+ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
+
+-- -- para tener arbol de categorias
+-- LEFT JOIN `meli-bi-data.WHOWNER.AG_LK_CAT_CATEGORIES` AS E 
+-- ON E.CAT_CATEG_ID_L7 = CAST(B.CAT_CATEG_ID_L7 AS INTEGER)
+-- AND E.SIT_SITE_ID = B.SIT_SITE_ID
+
+-- -- para joinear con atributos de anuncio real estate
+-- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS F
+-- ON CAST(A.lead_item_id AS STRING) = CAST(F.ite_item_id AS STRING)
+-- AND A.sit_site_id = F.sit_site_id
+
+-- -- para joinear con atributos de anuncio motors
+-- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS G
+-- ON CAST(A.lead_item_id AS STRING) = CAST(G.ite_item_id AS STRING)
+-- AND A.sit_site_id = G.sit_site_id
+
+
+WHERE A.LEAD_CREATED_DT BETWEEN '2023-07-01' AND '2023-09-03'
+AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
+AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
+AND B.cat_categ_id_l1 IN ('1459','1743') -- solo real estate y motors (para no traer services) 
+
+
+
+GROUP BY 1,2,3,4,5,6,7,8,9,10
+ORDER BY 1,2,3,4,5,6,7,8,9,10
+;
