@@ -1,3 +1,14 @@
+DECLARE fecha_desde DATE DEFAULT '2023-06-01'
+;
+DECLARE fecha_hasta DATE DEFAULT '2023-06-02'
+;
+
+DECLARE parametro_sites ARRAY <STRING>
+;
+SET parametro_sites = ['MLA','MLB','MLC','MLU','MLM']
+;
+
+
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
@@ -78,10 +89,11 @@ ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
 -- AND A.sit_site_id = G.sit_site_id
 
 
-WHERE A.LEAD_CREATED_DT BETWEEN '2023-07-01' AND '2023-09-03'
+WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
 AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
 AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
 AND B.cat_categ_id_l1 IN ('1459','1743') -- solo real estate y motors (para no traer services) 
+AND A.sit_site_id IN UNNEST(parametro_sites)
 
 
 
