@@ -33,17 +33,17 @@ SELECT
 ---------------------------------------------
 ----- columnas de atribución ---------------- 
 ---------------------------------------------
-  , (CASE WHEN C.ite_quot_source = 'facebook' THEN 'PAID' -- cotizaciones FB FORMS
+  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'PAID' -- cotizaciones FB FORMS
           WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'PAID' -- questions FB FORMS
-          WHEN A.matt_type_source = 'direct' THEN 'DIRECT'
-          WHEN A.matt_stimulus_source_type = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-          WHEN A.matt_stimulus_source_type = 'SEO' AND UPPER(A.matt_strategy) = 'NON BRAND' THEN 'SEO'
+          WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
+          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
+          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'NON BRAND' THEN 'SEO'
           WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
           WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-          WHEN A.matt_businessline IN ('REAL ESTATE','MOTORS','VIS GENERIC / ALL','AUTOPARTES') THEN 'PAID'
+          WHEN UPPER(A.matt_businessline) IN ('REAL ESTATE','MOTORS','VIS GENERIC / ALL','AUTOPARTES') THEN 'PAID'
           ELSE 'other' END) AS grouped_attribution
 
-  , (CASE WHEN C.ite_quot_source = 'facebook' THEN 'POM VIS'
+  , (CASE WHEN UPPER(C.ite_quot_source) = 'facebook' THEN 'POM VIS'
           WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
           WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE') 
                 AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
@@ -108,12 +108,12 @@ ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
 -- para joinear con tool ids POM VIS
 LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
 ON A.pms_tool_id = H.matt_tool
-AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
+AND UPPER(H.matt_business_unit) = 'VIS' -- solo tool ids de VIS
 AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
 -- logica acordada con equipo POM VIS
-AND H.matt_vertical IN ('MOTORS','REAL ESTATE')
-AND H.matt_campaign_type IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
-AND H.matt_implementation_channel NOT IN ('NOTIFICATIONS','EMAIL')
+AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE')
+AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
 
 
 WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
