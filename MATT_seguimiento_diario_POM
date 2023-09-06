@@ -45,15 +45,32 @@ SELECT
 
   , (CASE WHEN C.ite_quot_source = 'facebook' THEN 'POM VIS'
           WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
-          WHEN (UPPER(A.matt_businessline) IN ('MOTORS','REAL ESTATE') 
-                AND UPPER(A.matt_campaign) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
-                AND UPPER(A.matt_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
+          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE') 
+                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+                AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
           END) AS is_POM_VIS -- logica acordada con equipo POM
 
-  , SAFE_DIVIDE( SUM(MATT_PORC_FIRST_CLICK), 100) AS contact_fist_click_attribution
-  , SAFE_DIVIDE( SUM(MATT_PORC_LAST_CLICK), 100) AS contact_last_click_attribution
-  , SAFE_DIVIDE( SUM(MATT_PORC_LINEAL), 100) AS contact_lineal_attribution
-  , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
+
+  , H.matt_tool
+  , H.matt_vertical
+  , H.matt_flow
+  , H.matt_campaign_type
+  , H.matt_implementation
+  , H.matt_implementation_source
+  , H.matt_implementation_channel
+  , H.matt_strategy
+  , H.matt_audience
+  , H.matt_objective
+  , H.matt_seasonality
+  , H.matt_tool_description
+  , H.matt_tool_root_category
+  , H.matt_tool_ucn
+
+
+  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_FIRST_CLICK), 100) ) AS contact_fist_click_attribution
+  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_LAST_CLICK), 100) ) AS contact_last_click_attribution
+  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_LINEAL), 100) ) AS contact_lineal_attribution
+  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) ) AS contact_timedecay_attribution
 
 
 
@@ -88,6 +105,16 @@ ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
 -- ON CAST(A.lead_item_id AS STRING) = CAST(G.ite_item_id AS STRING)
 -- AND A.sit_site_id = G.sit_site_id
 
+-- para joinear con tool ids POM VIS
+LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
+ON A.pms_tool_id = H.matt_tool
+AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
+AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
+-- logica acordada con equipo POM VIS
+AND H.matt_vertical IN ('MOTORS','REAL ESTATE')
+AND H.matt_campaign_type IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+AND H.matt_implementation_channel NOT IN ('NOTIFICATIONS','EMAIL')
+
 
 WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
 AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
@@ -97,6 +124,6 @@ AND A.sit_site_id IN UNNEST(parametro_sites)
 
 
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10
-ORDER BY 1,2,3,4,5,6,7,8,9,10
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
 ;
