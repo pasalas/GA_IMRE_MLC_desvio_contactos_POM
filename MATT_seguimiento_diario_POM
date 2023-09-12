@@ -47,11 +47,10 @@ SELECT
 
   , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'POM VIS'
           WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
-          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL','GEN')
-                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
+                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
                 AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
           END) AS is_POM_VIS -- logica acordada con equipo POM
-
 
   , H.matt_tool
   , H.matt_vertical
@@ -113,8 +112,8 @@ ON A.pms_tool_id = H.matt_tool
 AND UPPER(H.matt_business_unit) = 'VIS' -- solo tool ids de VIS
 AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
 -- logica acordada con equipo POM VIS
-AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL','GEN')
-AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
+AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
 AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
 
 
@@ -123,7 +122,6 @@ AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en 
 AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
 AND B.cat_categ_id_l1 IN ('1459','1743') -- solo real estate y motors (para no traer services) 
 AND A.sit_site_id IN UNNEST(parametro_sites)
-
 
 
 GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
