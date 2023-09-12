@@ -111,7 +111,7 @@ ON A.pms_tool_id = H.matt_tool
 AND UPPER(H.matt_business_unit) = 'VIS' -- solo tool ids de VIS
 AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
 -- logica acordada con equipo POM VIS
-AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE')
+AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
 AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
 AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
 
