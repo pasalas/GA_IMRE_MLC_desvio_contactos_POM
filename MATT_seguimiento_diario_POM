@@ -1,8 +1,8 @@
 -- https://github.com/pasalas/GA_POM_queries/blob/main/MATT_seguimiento_diario_POM
 
-DECLARE fecha_desde DATE DEFAULT '2023-06-01'
+DECLARE fecha_desde DATE DEFAULT '2023-09-01'
 ;
-DECLARE fecha_hasta DATE DEFAULT '2023-06-02'
+DECLARE fecha_hasta DATE DEFAULT '2023-09-09'
 ;
 
 DECLARE parametro_sites ARRAY <STRING>
@@ -47,7 +47,7 @@ SELECT
 
   , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'POM VIS'
           WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
-          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
+          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL','GEN')
                 AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
                 AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
           END) AS is_POM_VIS -- logica acordada con equipo POM
@@ -112,10 +112,10 @@ LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
 ON A.pms_tool_id = H.matt_tool
 AND UPPER(H.matt_business_unit) = 'VIS' -- solo tool ids de VIS
 AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
--- logica acordada con equipo POM VIS
-AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
-AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
-AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
+-- -- logica acordada con equipo POM VIS
+-- AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL','GEN')
+-- AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO')
+-- AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
 
 
 WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
