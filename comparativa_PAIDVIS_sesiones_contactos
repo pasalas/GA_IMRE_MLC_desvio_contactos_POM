@@ -38,11 +38,11 @@ SELECT
 
   , COUNT(IF((type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/'),1,NULL)) AS Vip_visit_totales
 
-  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')) ,1,NULL)) AS contactos_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION','UNREGISTERED_QUOTE_INTENTION')) ,1,NULL)) AS contactos_totales
   , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL')) ,1,NULL)) AS call_totales
   , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CONTACT')) ,1,NULL)) AS question_totales
   , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CONTACT_WHATSAPP')) ,1,NULL)) AS whatsapp_totales
-  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('QUOTATION')) ,1,NULL)) AS quotation_totales
+  , COUNT(IF((type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('QUOTATION','UNREGISTERED_QUOTE_INTENTION')) ,1,NULL)) AS quotation_totales
 
 
 
@@ -66,7 +66,7 @@ AND A.vertical LIKE ('REA%')
 
 -- filtro para vip visit + contactos
 AND (    (type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/') -- FILTRO PARA VIP VISIT
-      OR (type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION')) ) -- FILTRO PARA CONTACTOS
+      OR (type  = 'EVENT' AND UPPER(eventInfo.eventAction) IN ('CALL','CONTACT','CONTACT_WHATSAPP','QUOTATION','UNREGISTERED_QUOTE_INTENTION')) ) -- FILTRO PARA CONTACTOS
 
 
 AND B.Categoria_l3 = 'Arriendo'
