@@ -67,7 +67,7 @@ AND A.vertical LIKE ('REA%')
 -- filtro para vip visit + contactos
 AND (    (type <> 'EVENT' AND appInfo.ScreenName LIKE '%VIP/ITEM/MAIN/') -- FILTRO PARA VIP VISIT
       OR (  (type='EVENT' AND upper(eventInfo.eventAction) in ('CALL','CONTACT','CONTACT_WHATSAPP') )
-         OR (page.pagePath IN ('/QUOTATION/CONGRATS/','/QUOTATION/CONGRATS/UNREGISTERED/') ) )  
+        OR  (type<>'EVENT' AND page.pagePath IN ('/QUOTATION/CONGRATS/','/QUOTATION/CONGRATS/UNREGISTERED/') ) )  
     )
 
 
