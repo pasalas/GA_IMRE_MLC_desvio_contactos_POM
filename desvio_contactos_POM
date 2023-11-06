@@ -297,7 +297,7 @@ ON (SELECT MAX(value) FROM A.customDimensions WHERE index= 49) /*SITE_ID_ITEM_ID
 WHERE site IN ('MLA','MLB','MLC','MLM')
 -- AND businessUnit = 'ML' -- traigo solo ML porque POM anuncia solo ML -- ,'PortalInmobiliario'
 AND (  (type='EVENT' AND upper(eventInfo.eventAction) in ('CALL','CONTACT','CONTACT_WHATSAPP') )
-    OR (page.pagePath IN ('/QUOTATION/CONGRATS/','/QUOTATION/CONGRATS/UNREGISTERED/') ) )
+   OR  (type<>'EVENT' AND page.pagePath IN ('/QUOTATION/CONGRATS/','/QUOTATION/CONGRATS/UNREGISTERED/') ) )  
 AND REGEXP_CONTAINS(upper(trafficSource.campaign),'.*_CLASSI_.*') IS TRUE
 AND FECHA BETWEEN FECHA_DESDE AND FECHA_HASTA
 
