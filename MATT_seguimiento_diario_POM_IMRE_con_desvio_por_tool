@@ -23,6 +23,10 @@ SELECT
   -- business unit
   , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
 
+  , (CASE WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE THEN 'devs'
+          WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') THEN 'alquiler'
+          WHEN F.OPERATION IN ('Venta','Venda') THEN 'venta'
+          ELSE 'other' END) AS operacion
 
 ---------------------------------------------
 ----- columnas de atribución ---------------- 
@@ -148,6 +152,6 @@ AND B.cat_categ_id_l1 IN ('1459') -- solo real estate y motors (para no traer se
 AND A.sit_site_id IN UNNEST(parametro_sites)
 
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
-ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 ;
