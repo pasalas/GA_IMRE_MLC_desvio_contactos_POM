@@ -35,22 +35,26 @@ SELECT
 ---------------------------------------------
 ----- columnas de atribución ---------------- 
 ---------------------------------------------
-  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'PAID' -- cotizaciones FB FORMS
-          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'PAID' -- questions FB FORMS
+  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
+            -- logica acordada con POM VIS
+          WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+             AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+             AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
           WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
+          WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
           WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'NON BRAND' THEN 'SEO'
+          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
           WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
           WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-          WHEN UPPER(A.matt_businessline) IN ('REAL ESTATE','MOTORS','VIS GENERIC / ALL','AUTOPARTES') THEN 'PAID'
-          ELSE 'other' END) AS grouped_attribution
+          WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
+          ELSE 'Other' END) AS grouped_attribution
 
-  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'POM VIS'
-          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
-          WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
-                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
-          END) AS is_POM_VIS -- logica acordada con equipo POM
+    , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'POM VIS'
+            WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
+            WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+                  AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+                  AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
+            END) AS is_POM_VIS -- logica acordada con equipo POM
 
   , H.matt_tool
   , H.matt_vertical
