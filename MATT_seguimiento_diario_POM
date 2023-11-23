@@ -93,7 +93,7 @@ aca les dejo la query, le agregué parametros de vertical y site para que puedan
 
 
         , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
-        , COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) AS user_contact
+        , COUNT( DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) ) AS user_contact
 
 
 
