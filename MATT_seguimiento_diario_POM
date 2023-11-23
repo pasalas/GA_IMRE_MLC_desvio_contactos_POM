@@ -7,7 +7,7 @@ DECLARE fecha_hasta DATE DEFAULT '2023-09-09'
 
 DECLARE parametro_sites ARRAY <STRING>
 ;
-SET parametro_sites = ['MLA','MLB','MLC','MLU','MLM']
+SET parametro_sites = ['MLA','MLC','MLU','MLM']
 ;
 
 
@@ -19,18 +19,16 @@ SET parametro_sites = ['MLA','MLB','MLC','MLU','MLM']
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
 SELECT 
-    A.LEAD_CREATED_DT
-  , EXTRACT(DAY FROM A.LEAD_CREATED_DT) AS day
-  , EXTRACT(MONTH FROM A.LEAD_CREATED_DT) AS month
-  , EXTRACT(YEAR FROM A.LEAD_CREATED_DT) AS year
-  , EXTRACT(WEEK FROM A.LEAD_CREATED_DT) AS week
-  , B.sit_site_id
+    B.sit_site_id
+  , LEAD_CREATED_DT
+
   -- business unit
   , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
 
-  -- , E.cat_categ_name_l2
-
-  , B.CCL_PLATFORM_ID
+  , (CASE WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE THEN 'devs'
+          WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') THEN 'alquiler'
+          WHEN F.OPERATION IN ('Venta','Venda') THEN 'venta'
+          ELSE 'other' END) AS operacion
 
 ---------------------------------------------
 ----- columnas de atribución ---------------- 
@@ -55,6 +53,34 @@ SELECT
                   AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
                   AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
             END) AS is_POM_VIS -- logica acordada con equipo POM
+
+  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'sin desvio'
+          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'sin desvio'
+        -- MLC: DEVS
+        WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE AND pms_tool_id IN (64662308,34362173,48339786,62955481,33829837,91314426,22277022,18708969,35077319,82157332,84044376,95415959,63580375,60228388) THEN 'sin desvio'
+
+        -- MLC: SALE
+        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (35797385) THEN 'sin desvio'
+
+        -- MLC: RENT
+        WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') AND pms_tool_id IN (20580454,18600411) THEN 'sin desvio'
+
+        -- MLM: SALE
+        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (81316329,55717597,15318645,92539962) THEN 'sin desvio'
+
+        -- MLM: RENT
+        WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') AND pms_tool_id IN (67810954,25048348,77280453) THEN 'sin desvio'
+
+        -- MLA: SALE
+        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (15492379,17617237,78998618,39940162,82623585,46422048,46398093,68873644) THEN 'sin desvio'
+
+        -- MLU: DEVS
+        WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE AND pms_tool_id IN (77975453,52588179,63836816) THEN 'sin desvio'
+
+        WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+                  AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+                  AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'con desvio'
+        END) AS desvio_operacion_pom_vis
 
   , H.matt_tool
   , H.matt_vertical
@@ -100,10 +126,10 @@ ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
 -- ON E.CAT_CATEG_ID_L7 = CAST(B.CAT_CATEG_ID_L7 AS INTEGER)
 -- AND E.SIT_SITE_ID = B.SIT_SITE_ID
 
--- -- para joinear con atributos de anuncio real estate
--- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS F
--- ON CAST(A.lead_item_id AS STRING) = CAST(F.ite_item_id AS STRING)
--- AND A.sit_site_id = F.sit_site_id
+-- para joinear con atributos de anuncio real estate
+LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS F
+ON CAST(A.lead_item_id AS STRING) = CAST(F.ite_item_id AS STRING)
+AND A.sit_site_id = F.sit_site_id
 
 -- -- para joinear con atributos de anuncio motors
 -- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS G
@@ -124,10 +150,10 @@ AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
 WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
 AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
 AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
-AND B.cat_categ_id_l1 IN ('1459','1743') -- solo real estate y motors (para no traer services) 
+AND B.cat_categ_id_l1 IN ('1459') -- solo real estate y motors (para no traer services) 
 AND A.sit_site_id IN UNNEST(parametro_sites)
 
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
-ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
 ;
