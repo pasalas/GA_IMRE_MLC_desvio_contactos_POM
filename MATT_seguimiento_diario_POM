@@ -1,3 +1,4 @@
+aca les dejo la query, le agregué parametros de vertical y site para que puedan cambiarlo a su antojo, y la metrica user_contact
 -- https://github.com/pasalas/GA_POM_queries/blob/main/MATT_seguimiento_diario_POM
 
 ------------------------------------------------------------------------------------------------
@@ -92,7 +93,6 @@
 
 
         , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
-
         , COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) AS user_contact
 
 
