@@ -1,16 +1,5 @@
 -- https://github.com/pasalas/GA_POM_queries/blob/main/MATT_seguimiento_diario_POM
 
-DECLARE fecha_desde DATE DEFAULT '2023-09-01'
-;
-DECLARE fecha_hasta DATE DEFAULT '2023-09-09'
-;
-
-DECLARE parametro_sites ARRAY <STRING>
-;
-SET parametro_sites = ['MLA','MLC','MLU','MLM']
-;
-
-
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
@@ -18,142 +7,175 @@ SET parametro_sites = ['MLA','MLC','MLU','MLM']
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
-SELECT 
-    B.sit_site_id
-  , LEAD_CREATED_DT
-
-  -- business unit
-  , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
-
-  , (CASE WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE THEN 'devs'
-          WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') THEN 'alquiler'
-          WHEN F.OPERATION IN ('Venta','Venda') THEN 'venta'
-          ELSE 'other' END) AS operacion
-
----------------------------------------------
------ columnas de atribución ---------------- 
----------------------------------------------
-  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
-            -- logica acordada con POM VIS
-          WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-             AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-             AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
-          WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
-          WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
-          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-          WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
-          WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
-          WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-          WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
-          ELSE 'Other' END) AS grouped_attribution
-
-    , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'POM VIS'
-            WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS'
-            WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-                  AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                  AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'POM VIS'
-            END) AS is_POM_VIS -- logica acordada con equipo POM
-
-  , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'sin desvio'
-          WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'sin desvio'
-        -- MLC: DEVS
-        WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE AND pms_tool_id IN (64662308,34362173,48339786,62955481,33829837,91314426,22277022,18708969,35077319,82157332,84044376,95415959,63580375,60228388) THEN 'sin desvio'
-
-        -- MLC: SALE
-        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (35797385) THEN 'sin desvio'
-
-        -- MLC: RENT
-        WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') AND pms_tool_id IN (20580454,18600411) THEN 'sin desvio'
-
-        -- MLM: SALE
-        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (81316329,55717597,15318645,92539962) THEN 'sin desvio'
-
-        -- MLM: RENT
-        WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') AND pms_tool_id IN (67810954,25048348,77280453) THEN 'sin desvio'
-
-        -- MLA: SALE
-        WHEN F.OPERATION IN ('Venta','Venda') AND pms_tool_id IN (15492379,17617237,78998618,39940162,82623585,46422048,46398093,68873644) THEN 'sin desvio'
-
-        -- MLU: DEVS
-        WHEN REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE AND pms_tool_id IN (77975453,52588179,63836816) THEN 'sin desvio'
-
-        WHEN (UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-                  AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                  AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL'))  THEN 'con desvio'
-        END) AS desvio_operacion_pom_vis
-
-  , H.matt_tool
-  , H.matt_vertical
-  , H.matt_flow
-  , H.matt_campaign_type
-  , H.matt_implementation
-  , H.matt_implementation_source
-  , H.matt_implementation_channel
-  , H.matt_strategy
-  , H.matt_audience
-  , H.matt_objective
-  , H.matt_seasonality
-  , H.matt_tool_description
-  , H.matt_tool_root_category
-  , H.matt_tool_ucn
+  DECLARE fecha_desde DATE DEFAULT '2023-10-01'
+  ;
+  DECLARE fecha_hasta DATE DEFAULT current_date
+  ;
 
 
-  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_FIRST_CLICK), 100) ) AS contact_fist_click_attribution
-  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_LAST_CLICK), 100) ) AS contact_last_click_attribution
-  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_LINEAL), 100) ) AS contact_lineal_attribution
-  , ROUND(SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) ) AS contact_timedecay_attribution
+  DECLARE var_sites ARRAY <STRING>;
+
+  DECLARE var_vertical ARRAY <STRING>;
+
+  -- ingresar los sites requeridos
+  SET var_sites = ['MLA','MLB','MLC','MLM','MLU','MCO']
+  ;
+
+  -- ingresar las verticales requeridas
+  -- 1459 = real estate
+  -- 1743 = motors
+  SET var_vertical = ['1459','1743']
+  ;
 
 
 
+  SELECT 
+      A.LEAD_CREATED_DT AS fecha
+    , A.sit_site_id
+    , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
+    -- , E.cat_categ_name_l2
+
+    ---------------------------------------------
+    ----- columnas de atribución ---------------- 
+    ---------------------------------------------
+      , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
+                -- logica acordada con POM VIS
+              WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+                AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
+              WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
+              WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
+              WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
+              WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
+              WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
+              WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
+              WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
+              ELSE 'Other' END) AS grouped_attribution
+
+      , IF( (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
+                    -- logica acordada con POM VIS
+                  WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+                    AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+                    AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
+                  WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
+                  WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
+                  WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
+                  ELSE 'Other' END) = 'POM VIS'
+          , (CASE WHEN H.matt_implementation_source = 'GOOGLE' AND H.matt_implementation_channel = 'DISPLAY' THEN 'GOOGLE DISPLAY'
+                  WHEN H.matt_implementation_source = 'GOOGLE' THEN 'GOOGLE SEARCH'
+                  WHEN H.matt_implementation_source = 'FACEBOOK' AND H.matt_implementation = 'FACEBOOK LEAD ADS' THEN 'FACEBOOK FORMS'
+                  WHEN H.matt_implementation_source = 'FACEBOOK' THEN 'FACEBOOK'
+                  WHEN H.matt_implementation = 'RTB' THEN 'RTB'
+                    -- WHEN MATT_TOOL IN (XXXX) -- me tienen que pasar las tools de los experimentos de MLB enfocado a traer usuarios unicos
+                  ELSE 'other' END)
+          , 'N/A')  AS POM_VIS_subgroup
+
+      , IF( (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
+                    -- logica acordada con POM VIS
+                  WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
+                    AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
+                    AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
+                  WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
+                  WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
+                  WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
+                  WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
+                  ELSE 'Other' END) = 'POM VIS'
+          , CAST(pms_tool_id AS STRING)
+          , 'N/A')  AS POM_VIS_tool_id
+        -- , A.matt_type_source      -- external, direct
+        -- , A.matt_business_unit    -- VIS
+        -- , A.matt_stimulus_source_type
+        -- , A.matt_businessline     -- 'MOTORS','CORE','VIS GENERIC / ALL','REAL ESTATE','AUTOPARTES'
+        -- , A.matt_source           -- DIRECT,FACEBOOK,BING,GOOGLE,MERCADO LIBRE,MEDIOS,TIKTOK
+        -- , A.matt_channel          -- DIRECT,DISPLAY,SEARCH,EMAIL,PAID SEARCH,NOTIFICATIONS,VIDEO
+        -- , A.matt_implementation_name -- 'Bing Organico','Google Organico','EMAIL','PUSH APP ML','FACEBOOK LEAD ADS','YOUTUBE TRUE VIEW','GOOGLE DSA','GOOGLE PAID SEARCH','FACEBOOK DABA','FACEBOOK CONVERSIONES','FACEBOOK DPA','GOOGLE DRA (Dynamic Remarketing Ads)','RTB','DYNAMIC ADDS FOR REAL ESTATE (DARE)','GDN Display Ads','TROVIT','AUTOMOTIVE INVENTORY ADS (AIA)'
+        -- , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'facebook' -- cotizaciones FB FORMS
+        --         WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'facebook' -- questions FB FORMS
+        --         ELSE 'internal' END) AS is_facebook_forms
+                
+        -- , A.MATT_STRATEGY         -- Non Brand,REMARKETING,ACQUISITION,RECUPERO,BRAND AWARENESS,INFORMATIVO,PROSPECTING,RETENTION
+        -- , A.MATT_CAMPAIGN         -- 'Always On / Recurrentes','BIGCAMPAIGN'
+        -- , A.MATT_SUBBUSINESSLINE  -- null
+        -- , A.PMS_SEARCH_WORD       -- campo libre que pueden completar quienes realizan acciones
+        -- , A.PMS_TOOL_ID           -- tool id relacionada a la acción
+
+      ---------------------------------------------
+      ----- tipo de lead           ---------------- 
+      ---------------------------------------------
+        -- , A.lead_type             -- 'Click to Call','Click to Whatsapp','Question','Quotation'
 
 
-FROM `growth-attribution.production.BT_MATT_ATTRIBUTION_LEADS` AS A
-
--- para joinear con fuente de dónde MATT toma leads de questions, call, whatsapp y quotation
-LEFT JOIN `meli-bi-data.WHOWNER.BT_CONTACTS_CLASSIFIEDS` AS B
-ON A.lead_id = B.id
-
--- para tener info extra de quotations. FB FORMS = ITE_QUOT_SOURCE IN ('facebook')
-LEFT JOIN `meli-bi-data.WHOWNER.BT_ITE_QUOTATION` AS C
-ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(C.ITE_QUOTATION_ID AS STRING)
-
--- para tener info extra de questions. FB FORMS = QUESTION_APP_ID IN (6606988212253970,6557539776310564)
-LEFT JOIN `meli-bi-data.WHOWNER.BT_ITEM_QUESTIONS` AS D
-ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
-
--- -- para tener arbol de categorias
--- LEFT JOIN `meli-bi-data.WHOWNER.AG_LK_CAT_CATEGORIES` AS E 
--- ON E.CAT_CATEG_ID_L7 = CAST(B.CAT_CATEG_ID_L7 AS INTEGER)
--- AND E.SIT_SITE_ID = B.SIT_SITE_ID
-
--- para joinear con atributos de anuncio real estate
-LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS F
-ON CAST(A.lead_item_id AS STRING) = CAST(F.ite_item_id AS STRING)
-AND A.sit_site_id = F.sit_site_id
-
--- -- para joinear con atributos de anuncio motors
--- LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS G
--- ON CAST(A.lead_item_id AS STRING) = CAST(G.ite_item_id AS STRING)
--- AND A.sit_site_id = G.sit_site_id
-
--- para joinear con tool ids POM VIS
-LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
-ON A.pms_tool_id = H.matt_tool
-AND UPPER(H.matt_business_unit) = 'VIS' -- solo tool ids de VIS
-AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
--- logica acordada con equipo POM VIS
-AND UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO','VIS GENERIC / ALL')
-AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL')
+      ---------------------------------------------
+      ----- columnas granulares    ---------------- 
+      ---------------------------------------------
+      -- , A.MATT_DEVICE_UUID   -- uuid del touchpoint
+      -- , B.SESSION_ID AS uuid -- uuid del lead en tabla de BT_CONTACT_CLASSIFIELDS 
+      -- , A.lead_id            -- id unico del lead
 
 
-WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta -- historico a partir de 2023-06-01
-AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
-AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
-AND B.cat_categ_id_l1 IN ('1459') -- solo real estate y motors (para no traer services) 
-AND A.sit_site_id IN UNNEST(parametro_sites)
+
+      ------------------------------------------------------------------------------------------
+      -----  Metricas de contactos por los distintos tipos de modelos de atribucións ----------- 
+      ------------------------------------------------------------------------------------------
+        -- , COUNT(DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID)  ) AS unique_user -- problematica que repite por la cantidad de group by
+
+        -- , SAFE_DIVIDE( SUM(MATT_PORC_FIRST_CLICK), 100) AS contact_first_click_attribution
+        -- , SAFE_DIVIDE( SUM(MATT_PORC_LAST_CLICK), 100) AS contact_last_click_attribution
+        -- , SAFE_DIVIDE( SUM(MATT_PORC_LINEAL), 100) AS contact_lineal_attribution
+        , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
 
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
-ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
-;
+
+  FROM `growth-attribution.production.BT_MATT_ATTRIBUTION_LEADS` AS A
+
+  -- para joinear con fuente de dónde MATT toma leads de questions, call, whatsapp y quotation
+  LEFT JOIN `meli-bi-data.WHOWNER.BT_CONTACTS_CLASSIFIEDS` AS B
+  ON A.lead_id = B.id
+
+  -- para tener info extra de quotations. FB FORMS = ITE_QUOT_SOURCE IN ('facebook')
+  LEFT JOIN `meli-bi-data.WHOWNER.BT_ITE_QUOTATION` AS C
+  ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(C.ITE_QUOTATION_ID AS STRING)
+
+  -- para tener info extra de questions. FB FORMS = QUESTION_APP_ID IN (6606988212253970,6557539776310564)
+  LEFT JOIN `meli-bi-data.WHOWNER.BT_ITEM_QUESTIONS` AS D
+  ON CAST(B.EXTERNAL_ENTITY_ID AS STRING) = CAST(D.QUES_ID AS STRING)
+
+  -- para tener arbol de categorias
+  LEFT JOIN `meli-bi-data.WHOWNER.AG_LK_CAT_CATEGORIES` AS E 
+  ON E.CAT_CATEG_ID_L7 = CAST(B.CAT_CATEG_ID_L7 AS INTEGER)
+  AND E.SIT_SITE_ID = B.SIT_SITE_ID
+
+  -- para joinear con atributos de anuncio real estate
+  LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMRE` AS F
+  ON CAST(A.lead_item_id AS STRING) = CAST(F.ite_item_id AS STRING)
+  AND A.sit_site_id = F.sit_site_id
+
+  -- para joinear con atributos de anuncio motors
+  LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS G
+  ON CAST(A.lead_item_id AS STRING) = CAST(G.ite_item_id AS STRING)
+  AND A.sit_site_id = G.sit_site_id
+
+  -- para joinear con datos de cada tool id existente en el matt admin
+  LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
+  ON A.pms_tool_id = H.matt_tool
+  AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
+  AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
+
+  WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta
+  AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
+  AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
+  AND B.cat_categ_id_l1 IN UNNEST(var_vertical) -- solo real estate y motors (para no traer services) 
+  AND A.sit_site_id IN UNNEST(var_sites)
+
+
+  GROUP BY 1,2,3,4,5,6
+  ORDER BY 1,2,3,4,5,6
+  ;
+
