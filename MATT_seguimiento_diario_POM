@@ -1,4 +1,3 @@
-aca les dejo la query, le agregué parametros de vertical y site para que puedan cambiarlo a su antojo, y la metrica user_contact
 -- https://github.com/pasalas/GA_POM_queries/blob/main/MATT_seguimiento_diario_POM
 
 ------------------------------------------------------------------------------------------------
@@ -31,7 +30,7 @@ aca les dejo la query, le agregué parametros de vertical y site para que puedan
 
 
   SELECT 
-      A.LEAD_CREATED_DT AS fecha
+      A.LEAD_CREATED_DT
     , A.sit_site_id
     , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
     -- , E.cat_categ_name_l2
@@ -39,61 +38,14 @@ aca les dejo la query, le agregué parametros de vertical y site para que puedan
     ---------------------------------------------
     ----- columnas de atribución ---------------- 
     ---------------------------------------------
-      , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
-                -- logica acordada con POM VIS
-              WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-                AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
-              WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
-              WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
-              WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-              WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
-              WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
-              WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-              WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
-              ELSE 'Other' END) AS grouped_attribution
+      , `meli-bi-data.SBOX_MKTVIS`.fx_grouped_attribution(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel) AS grouped_attribution
 
-      , IF( (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
-                    -- logica acordada con POM VIS
-                  WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-                    AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                    AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
-                  WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
-                  WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
-                  WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
-                  ELSE 'Other' END) = 'POM VIS'
-          , (CASE WHEN H.matt_implementation_source = 'GOOGLE' AND H.matt_implementation_channel = 'DISPLAY' THEN 'GOOGLE DISPLAY'
-                  WHEN H.matt_implementation_source = 'GOOGLE' THEN 'GOOGLE SEARCH'
-                  WHEN H.matt_implementation_source = 'FACEBOOK' AND H.matt_implementation = 'FACEBOOK LEAD ADS' THEN 'FACEBOOK FORMS'
-                  WHEN H.matt_implementation_source = 'FACEBOOK' THEN 'FACEBOOK'
-                  WHEN H.matt_implementation = 'RTB' THEN 'RTB'
-                    -- WHEN MATT_TOOL IN (XXXX) -- me tienen que pasar las tools de los experimentos de MLB enfocado a traer usuarios unicos
-                  ELSE 'other' END)
-          , 'N/A')  AS POM_VIS_subgroup
+      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation) AS POM_VIS_subgroup
 
-      , IF( (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' OR B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'POM VIS' -- fb forms
-                    -- logica acordada con POM VIS
-                  WHEN ( UPPER(H.matt_vertical) IN ('MOTORS','REAL ESTATE','PORTAL INMOBILIARIO') -- 'VIS GENERIC / ALL'
-                    AND UPPER(H.matt_campaign_type) IN ('ALWAYS ON','FECHA ESPECIAL','INICIATIVA ESTRATEGICA','EXPERIMENTO','GEN')
-                    AND UPPER(H.matt_implementation_channel) NOT IN ('NOTIFICATIONS','EMAIL') )  THEN 'POM VIS'
-                  WHEN UPPER(A.matt_type_source) = 'DIRECT' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'DIRECT' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' AND UPPER(A.matt_strategy) = 'BRAND' THEN 'DIRECT'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'SEO' THEN 'SEO'
-                  WHEN UPPER(A.matt_source) IN ('MERCADO LIBRE','MERCADO PAGO') THEN 'OWN CHANNELS'
-                  WHEN UPPER(A.matt_channel) IN ('NOTIFICATIONS') THEN 'OWN CHANNELS'
-                  WHEN UPPER(A.matt_stimulus_source_type) = 'MATT' THEN 'OTHER MATT'
-                  ELSE 'Other' END) = 'POM VIS'
-          , CAST(pms_tool_id AS STRING)
-          , 'N/A')  AS POM_VIS_tool_id
+      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,A.pms_tool_id) AS POM_VIS_tool_id
 
 
-        , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
-        , COUNT( DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) ) AS user_contact
+      , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
 
 
 
@@ -135,7 +87,7 @@ aca les dejo la query, le agregué parametros de vertical y site para que puedan
   WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta
   AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
   AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
-  AND B.cat_categ_id_l1 IN UNNEST(var_vertical)  
+  AND B.cat_categ_id_l1 IN UNNEST(var_vertical) -- solo real estate y motors (para no traer services) 
   AND A.sit_site_id IN UNNEST(var_sites)
 
 
