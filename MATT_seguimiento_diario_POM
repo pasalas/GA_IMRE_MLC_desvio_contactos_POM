@@ -46,6 +46,7 @@
 
 
       , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
+      , COUNT( DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) ) AS user_contact
 
 
 
