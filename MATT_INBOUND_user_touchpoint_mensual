@@ -1,0 +1,49 @@
+
+
+DECLARE fecha_desde DATE DEFAULT '2023-10-27'
+;
+DECLARE fecha_hasta DATE DEFAULT current_date
+;
+
+DECLARE var_tool_id ARRAY <STRING>;
+
+SET var_tool_id = ['52588179','63836816']
+;
+
+
+  SELECT
+    matt_tool
+  , DATE_TRUNC(ds_date, MONTH) AS mes
+  , sit_site_id
+
+  , `meli-bi-data.SBOX_MKTVIS`.fx_bt_vis_matt_inbound_grouped_attribution(matt_vertical, matt_campaign_type, matt_implementation_channel, matt_implementation_source, matt_implementation, matt_tool) AS grouped_attribution
+
+  , `meli-bi-data.SBOX_MKTVIS`.fx_bt_vis_matt_inbound_pom_vis_subgroup(matt_vertical, matt_campaign_type, matt_implementation_channel, matt_implementation_source, matt_implementation, matt_tool) AS pom_vis_subgroup
+  , matt_vertical
+  , matt_campaign_type
+  , matt_implementation
+
+  , COUNT(DISTINCT COALESCE(cus_cust_id, uid) ) AS user_touch_point
+
+  , COUNT(
+      DISTINCT
+      IF(
+          cus_cust_id IS NOT NULL
+        , cus_cust_id
+        , NULL ) ) AS user_logg_touch_point
+  , COUNT(
+      DISTINCT
+      IF(
+          cus_cust_id IS NULL    
+        , uid
+        , NULL ) ) AS user_not_logg_touch_point
+
+
+  FROM `meli-bi-data.SBOX_MKTVIS.BT_VIS_MATT_INBOUND` AS A
+
+  WHERE ds_date BETWEEN fecha_desde AND fecha_hasta
+  AND CAST(matt_tool AS STRING) IN UNNEST(var_tool_id)
+
+  GROUP BY 1,2,3,4,5,6,7,8
+  ORDER BY 1,2,3
+  ;
