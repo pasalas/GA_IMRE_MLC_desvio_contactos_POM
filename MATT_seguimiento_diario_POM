@@ -38,12 +38,11 @@
     ---------------------------------------------
     ----- columnas de atribución ---------------- 
     ---------------------------------------------
-      , `meli-bi-data.SBOX_MKTVIS`.fx_grouped_attribution(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel) AS grouped_attribution
+      , `meli-bi-data.SBOX_MKTVIS`.fx_grouped_attribution(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_tool) AS grouped_attribution
 
-      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation) AS POM_VIS_subgroup
+      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_subgroup
 
-      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,A.pms_tool_id) AS POM_VIS_tool_id
-
+      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_tool_id
 
       , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
       , COUNT( DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) ) AS user_contact
