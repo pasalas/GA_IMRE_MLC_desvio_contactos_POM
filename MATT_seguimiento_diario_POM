@@ -30,7 +30,7 @@
 
 
   SELECT 
-      A.LEAD_CREATED_DT
+      DATE_TRUNC(A.LEAD_CREATED_DT, DAY) AS fecha
     , A.sit_site_id
     , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
     -- , E.cat_categ_name_l2
