@@ -18,13 +18,10 @@
   DECLARE var_vertical ARRAY <STRING>;
 
   -- ingresar los sites requeridos
-  SET var_sites = ['MLA','MLB','MLC','MLM','MLU','MCO']
+  SET var_sites = ['MLA','MLC','MLM','MLU','MCO']
   ;
 
-  -- ingresar las verticales requeridas
-  -- 1459 = real estate
-  -- 1743 = motors
-  SET var_vertical = ['1459','1743']
+  SET var_vertical = ['1459']
   ;
 
 
@@ -33,7 +30,12 @@
       DATE_TRUNC(A.LEAD_CREATED_DT, DAY) AS fecha
     , A.sit_site_id
     , (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
-    -- , E.cat_categ_name_l2
+
+    , (CASE WHEN (REGEXP_CONTAINS(F.ITE_ITEM_DOM_DOMAIN_ID, 'DEVELOPMENT') IS TRUE) THEN 'devs'
+            WHEN F.OPERATION IN ('Venta','Venda') THEN 'venta'
+            WHEN F.OPERATION IN ('Alquiler','Arriendo','Renta','Aluguel') THEN 'alquiler'
+            WHEN F.OPERATION IN ('Alquiler temporal','Alquiler temporada','Arriendo temporal','Temporada','Renta vacacional','Alquiler vacacional') THEN 'alquiler temporal'
+            ELSE 'otro' END) AS operation
 
     ---------------------------------------------
     ----- columnas de atribución ---------------- 
@@ -113,6 +115,6 @@
   AND A.sit_site_id IN UNNEST(var_sites)
 
 
-  GROUP BY 1,2,3,4,5,6,7
-  ORDER BY 1,2,3,4,5,6,7
+  GROUP BY 1,2,3,4,5,6,7,8
+  ORDER BY 1,2,3,4,5,6,7,8
   ;
