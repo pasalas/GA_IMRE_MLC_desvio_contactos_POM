@@ -42,7 +42,7 @@
 
       , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_subgroup
 
-      -- , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_tool_id
+      , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_tool_id
       
       , (CASE WHEN UPPER(C.ite_quot_source) = 'FACEBOOK' THEN 'sin desvio'
                 WHEN B.mapp_app_id IN ('6557539776310564','6606988212253970') THEN 'sin desvio'
@@ -113,6 +113,6 @@
   AND A.sit_site_id IN UNNEST(var_sites)
 
 
-  GROUP BY 1,2,3,4,5,6
-  ORDER BY 1,2,3,4,5,6
+  GROUP BY 1,2,3,4,5,6,7
+  ORDER BY 1,2,3,4,5,6,7
   ;
