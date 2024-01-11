@@ -41,7 +41,7 @@
         , `meli-bi-data.SBOX_MKTVIS`.fx_matt_vertical_desvio(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool,B.cat_categ_id_l1) AS matt_vertical_desvio
         
         , (CASE WHEN A.CUS_CUST_ID_BUY IS NOT NULL THEN 'logged' ELSE 'not logged' END) AS is_logged
-        , COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID)  AS contact_user
+        , COALESCE( (CASE WHEN A.CUS_CUST_ID_BUY = 0 THEN NULL ELSE CAST(A.CUS_CUST_ID_BUY AS STRING) END), B.SESSION_ID, NULL)  AS contact_user
         , A.*
 
 
