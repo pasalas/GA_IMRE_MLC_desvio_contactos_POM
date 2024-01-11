@@ -45,7 +45,7 @@
       , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_tool_id
 
       , SAFE_DIVIDE( SUM(MATT_PORC_TIMEDECAY), 100) AS contact_timedecay_attribution
-      , COUNT( DISTINCT COALESCE(CAST(A.CUS_CUST_ID_BUY AS STRING), B.SESSION_ID) ) AS user_contact
+      , COUNT( DISTINCT COALESCE( (CASE WHEN A.CUS_CUST_ID_BUY = 0 THEN NULL ELSE CAST(A.CUS_CUST_ID_BUY AS STRING) END), B.SESSION_ID, NULL) ) AS user_contact
 
 
 
