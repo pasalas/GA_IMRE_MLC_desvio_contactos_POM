@@ -22,8 +22,8 @@
       SELECT 
           (CASE WHEN B.cat_categ_id_l1 = '1459' THEN 'real estate' WHEN B.cat_categ_id_l1 = '1743' THEN 'motors' WHEN B.cat_categ_id_l1 = '1540' THEN 'services' END) AS vertical
 
-        , `meli-bi-data.SBOX_MKTVIS`.fx_imre_operation(F.ite_item_dom_domain_id,F.operation) AS real_estate_operation
-        , `meli-bi-data.SBOX_MKTVIS`.fx_imm_ayc_and_others(E.cat_categ_name_l2) AS motors_ayc
+        , `meli-bi-data.SBOX_MKTVIS`.fx_imre_operation(F.ite_item_dom_domain_id,F.operation,B.cat_categ_id_l1) AS real_estate_operation
+        , `meli-bi-data.SBOX_MKTVIS`.fx_imm_ayc_and_others(E.cat_categ_id_l2,B.cat_categ_id_l1) AS motors_ayc
 
         , DATE_TRUNC(A.LEAD_CREATED_DT, YEAR) AS year
         , DATE_TRUNC(A.LEAD_CREATED_DT, QUARTER) AS quarter
@@ -31,14 +31,13 @@
         , DATE_TRUNC(A.LEAD_CREATED_DT, ISOWEEK) AS week
         , DATE_TRUNC(A.LEAD_CREATED_DT, DAY) AS date
 
-        , `meli-bi-data.SBOX_MKTVIS`.fx_grouped_attribution(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_tool) AS grouped_attribution
+        , `meli-bi-data.SBOX_MKTVIS`.fx_grouped_attribution(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_tool,POM.pom_vis_matt_tool) AS grouped_attribution
 
 
-        , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_subgroup
+        , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_subgroup(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool,POM.pom_vis_matt_tool) AS POM_VIS_subgroup
 
-        , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool) AS POM_VIS_tool_id
+        , `meli-bi-data.SBOX_MKTVIS`.fx_pom_vis_tool_id(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool,POM.pom_vis_matt_tool) AS POM_VIS_tool_id
 
-        , `meli-bi-data.SBOX_MKTVIS`.fx_matt_vertical_desvio(C.ite_quot_source,B.mapp_app_id,H.matt_vertical,H.matt_campaign_type,H.matt_implementation_channel,A.matt_type_source,A.matt_stimulus_source_type,A.matt_strategy,A.matt_source,A.matt_channel,H.matt_implementation_source,H.matt_implementation,H.matt_tool,B.cat_categ_id_l1) AS matt_vertical_desvio
         
         , (CASE WHEN A.CUS_CUST_ID_BUY IS NOT NULL THEN 'logged' ELSE 'not logged' END) AS is_logged
         , COALESCE( (CASE WHEN A.CUS_CUST_ID_BUY = 0 THEN NULL ELSE CAST(A.CUS_CUST_ID_BUY AS STRING) END), B.SESSION_ID, NULL)  AS contact_user
@@ -81,7 +80,11 @@
       AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
       AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
 
+      LEFT JOIN  `meli-bi-data.SBOX_MKTVIS.LK_POM_VIS_MATT_TOOL_REPOSITORY` AS POM
+      ON CAST(A.pms_tool_id AS STRING) = CAST(POM.pom_vis_matt_tool AS STRING)
+      AND POM.pom_vis_matt_tool IS NOT NULL
 
+      
       WHERE A.LEAD_CREATED_DT BETWEEN fecha_desde AND fecha_hasta
       AND LEAD_ATTRIBUTION_TYPE = 'VIS' -- para tener metricas relacionadas a VIS (en la tabla convive otra BU)
       AND LEAD_TYPE IN ('Quotation','Question','Click to Whatsapp','Click to Call') -- por el momento truncar en estos leads porque los de simulacion de crédito necesitan un cambio que todavía está pending por parte de MATT IT
@@ -103,7 +106,6 @@
       , grouped_attribution
       , POM_VIS_subgroup
       , POM_VIS_tool_id
-      -- , matt_vertical_desvio
 
 
       -- se crean las distribuciones por usuarios unicos. Nota: si se agregan más metricas, el número da distinto
