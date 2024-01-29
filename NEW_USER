@@ -1,0 +1,59 @@
+SELECT 
+    A.sit_site_id
+
+  , `meli-bi-data.SBOX_MKTVIS.fx_bt_cost_grouped_attribution`(matt_implementation_name, matt_implementation_channel, matt_type_source, matt_stimulus_source_type, A.matt_strategy, matt_source, matt_tool, pom_vis_matt_tool) AS grouped_attribution
+
+  , `meli-bi-data.SBOX_MKTVIS.fx_bt_cost_pom_vis_subgroup`(matt_implementation_name, matt_implementation_channel, matt_type_source, matt_stimulus_source_type, A.matt_strategy, matt_source, matt_tool, pom_vis_matt_tool, matt_channel) AS pom_vis_subgroup
+
+  , IF(`meli-bi-data.SBOX_MKTVIS.fx_bt_cost_grouped_attribution`(matt_implementation_name, matt_implementation_channel, matt_type_source, matt_stimulus_source_type, A.matt_strategy, matt_source, matt_tool, pom_vis_matt_tool)='POM VIS', A.campaign_name, 'N/A') AS pom_vis_campaign_name
+
+  , IF(`meli-bi-data.SBOX_MKTVIS.fx_bt_cost_grouped_attribution`(matt_implementation_name, matt_implementation_channel, matt_type_source, matt_stimulus_source_type, A.matt_strategy, matt_source, matt_tool, pom_vis_matt_tool)='POM VIS', CAST(pms_tool_id AS STRING), 'N/A') AS pom_vis_matt_tool
+
+  , lead_created_dt AS fecha
+
+-- metricas de la cuenta
+  , SUM(COST_LC) AS COST_LC 
+  , SUM(COST_USD) AS COST_USD 
+  , SUM(IMPRESSIONS) AS IMPRESSIONS 
+  , SUM(CLICKS) AS CLICKS 
+
+-- metricas de leads
+  , SUM(QTY_CONTACT_USERS_MOTORS) AS QTY_CONTACT_MOTORS
+  , SUM(QTY_NEW_USERS_MOTORS) AS QTY_NEW_USERS_MOTORS
+
+  , SUM(QTY_CONTACT_USERS_MOTORS_FOCO) AS QTY_CONTACT_MOTORS_FOCO
+  , SUM(QTY_NEW_USERS_MOTORS_FOCO) AS QTY_NEW_USERS_MOTORS_FOCO
+
+
+
+
+  , SUM(QTY_CONTACT_USERS_REAL_ESTATE) AS QTY_CONTACT_REAL_ESTATE
+  , SUM(QTY_NEW_USERS_REAL_ESTATE) AS QTY_NEW_USERS_REAL_ESTATE
+
+  , SUM(QTY_CONTACT_USERS_REAL_ESTATE_FOCO_SALE) AS QTY_CONTACT_REAL_ESTATE_FOCO_SALE
+  , SUM(QTY_NEW_USERS_REAL_ESTATE_FOCO_SALE) AS QTY_NEW_USERS_REAL_ESTATE_FOCO_SALE
+
+  , SUM(QTY_CONTACT_USERS_REAL_ESTATE_FOCO_RENT) AS QTY_CONTACT_REAL_ESTATE_FOCO_RENT
+  , SUM(QTY_NEW_USERS_REAL_ESTATE_FOCO_RENT) AS QTY_NEW_USERS_REAL_ESTATE_FOCO_RENT
+
+  , SUM(QTY_CONTACT_USERS_REAL_ESTATE_FOCO_DEVS) AS QTY_CONTACT_REAL_ESTATE_FOCO_DEVS
+  , SUM(QTY_NEW_USERS_REAL_ESTATE_FOCO_DEVS) AS QTY_NEW_USERS_REAL_ESTATE_FOCO_DEVS
+
+
+FROM `meli-bi-data.SBOX_MARKETINGTEMP.BT_MATT_VIS_TOOL_COST_EVENT` AS A
+
+LEFT JOIN  `meli-bi-data.SBOX_MKTVIS.LK_POM_VIS_MATT_TOOL_REPOSITORY` AS POM
+ON CAST(A.pms_tool_id AS STRING) = CAST(POM.pom_vis_matt_tool AS STRING)
+AND POM.pom_vis_matt_tool IS NOT NULL
+
+-- para joinear con datos de cada tool id existente en el matt admin
+LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
+ON A.pms_tool_id = H.matt_tool
+AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
+AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
+
+WHERE A.LEAD_CREATED_DT >= '2024-01-01'
+AND A.SIT_SITE_ID IN ('MLA','MLB','MLC','MLM','MLU')
+
+GROUP BY 1,2,3,4,5,6
+ORDER BY 1,2,3,4,5,6
