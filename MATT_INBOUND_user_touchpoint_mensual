@@ -33,13 +33,13 @@
   , COUNT(
       DISTINCT
       IF(
-          cus_cust_id IS NOT NULL
+          cus_cust_id IS NOT NULL OR SAFE_CAST(cus_cust_id AS INT64) <> 0
         , cus_cust_id
         , NULL ) ) AS user_logg_touchpoint
   , COUNT(
       DISTINCT
       IF(
-          cus_cust_id IS NULL    
+          cus_cust_id IS NULL OR SAFE_CAST(cus_cust_id AS INT64) = 0
         , uid
         , NULL ) ) AS user_not_logg_touchpoint
 
