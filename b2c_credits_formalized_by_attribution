@@ -1,0 +1,55 @@
+  SELECT 
+      A.lead_created_dt AS fecha
+    ---------------------------------------------
+    ----- columnas de atribución ---------------- 
+    ---------------------------------------------
+
+    , `meli-bi-data.SBOX_MKTVIS.fx_bt_cost_grouped_attribution`(A.matt_implementation_name, matt_implementation_channel, A.matt_type_source, A.matt_stimulus_source_type, A.matt_strategy, A.matt_source, matt_tool, pom_vis_matt_tool) AS grouped_attribution
+
+    , `meli-bi-data.SBOX_MKTVIS.fx_bt_cost_pom_vis_subgroup`(A.matt_implementation_name, matt_implementation_channel, A.matt_type_source, A.matt_stimulus_source_type, A.matt_strategy, A.matt_source, matt_tool, pom_vis_matt_tool, A.matt_channel) AS pom_vis_subgroup
+
+    , IF(pom_vis_matt_tool IS NOT NULL, POM.campaign_name, 'N/A') AS pom_vis_campaign_name
+    , POM.identificador AS pom_vis_identificador
+
+    , H.matt_tool
+    , H.matt_tool_ucn
+
+
+    , SAFE_DIVIDE( SUM(A.MATT_PORC_TIMEDECAY), 100) AS credits_formalized
+    -- -- metricas de la cuenta
+    -- , SUM(COST_LC) AS COST_LC 
+    -- , SUM(COST_USD) AS COST_USD 
+    -- , SUM(IMPRESSIONS) AS IMPRESSIONS 
+    -- , SUM(CLICKS) AS CLICKS 
+
+
+  FROM `growth-attribution.production.BT_MATT_ATTRIBUTION_LEADS` AS A
+
+
+  -- para joinear con atributos de anuncio motors
+  LEFT JOIN `meli-bi-data.SBOX_CLASSI_PLANNING.LK_ATRIBUTOS_IMM_IMS` AS G
+  ON CAST(A.lead_item_id AS STRING) = CAST(G.ite_item_id AS STRING)
+  AND A.sit_site_id = G.sit_site_id
+
+  -- para joinear con datos de cada tool id existente en el matt admin
+  LEFT JOIN `meli-bi-data.WHOWNER.BT_MATT_METADATA` AS H
+  ON A.pms_tool_id = H.matt_tool
+  AND H.matt_business_unit = 'VIS' -- solo tool ids de VIS
+  AND H.tim_day = CURRENT_DATE -- para traer el listado actualizado sin duplicar informacion
+
+  LEFT JOIN  `meli-bi-data.SBOX_MKTVIS.LK_POM_VIS_MATT_TOOL_REPOSITORY` AS POM
+  ON CAST(A.pms_tool_id AS STRING) = CAST(POM.pom_vis_matt_tool AS STRING)
+  AND POM.pom_vis_matt_tool IS NOT NULL
+
+  -- LEFT JOIN `meli-bi-data.SBOX_MARKETING.BT_MATT_VIS_TOOL_COST_EVENT` AS COST
+  -- ON A.LEAD_CREATED_DT = COST.LEAD_CREATED_DT
+  -- AND A.SIT_SITE_ID = COST.SIT_SITE_ID
+
+  WHERE A.lead_created_dt >= CURRENT_DATE-30
+  AND LEAD_ATTRIBUTION_TYPE = 'VIS'
+  AND A.sit_site_id = 'MLB'
+  AND A.lead_type = 'Simulacion de credito - Credito formalizado'
+
+  GROUP BY 1,2,3,4,5,6,7
+  ORDER BY 1 DESC
+  ;
