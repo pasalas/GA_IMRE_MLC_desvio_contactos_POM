@@ -28,20 +28,20 @@
   , matt_campaign_type
   , matt_implementation
 
-  , COUNT(DISTINCT COALESCE(cus_cust_id, uid) ) AS user_touch_point
+  , COUNT(DISTINCT COALESCE(cus_cust_id, uid) ) AS user_touchpoint
 
   , COUNT(
       DISTINCT
       IF(
           cus_cust_id IS NOT NULL
         , cus_cust_id
-        , NULL ) ) AS user_logg_touch_point
+        , NULL ) ) AS user_logg_touchpoint
   , COUNT(
       DISTINCT
       IF(
           cus_cust_id IS NULL    
         , uid
-        , NULL ) ) AS user_not_logg_touch_point
+        , NULL ) ) AS user_not_logg_touchpoint
 
 
   FROM `meli-bi-data.SBOX_MKTVIS.BT_VIS_MATT_INBOUND` AS A 
